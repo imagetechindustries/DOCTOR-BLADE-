@@ -108,13 +108,13 @@ export default function QuoteModal() {
 
     window.addEventListener("open-quote-modal", handleOpen);
 
-    // Automatic Popup Logic for Lead Generation (if not submitted)
+    // Automatic Popup Logic for Lead Generation
     let timer1, timer2, timer3;
     let hasTriggeredScroll = false;
 
     const handleScroll = () => {
-      if (!hasTriggeredScroll && window.scrollY > 300) {
-        if (localStorage.getItem("quoteSubmitted") !== "true") {
+      if (!hasTriggeredScroll && window.scrollY > 150) {
+        if (sessionStorage.getItem("quoteModalClosed") !== "true") {
           setIsOpen(true);
           hasTriggeredScroll = true;
           window.removeEventListener("scroll", handleScroll);
@@ -122,26 +122,27 @@ export default function QuoteModal() {
       }
     };
 
-    if (localStorage.getItem("quoteSubmitted") !== "true") {
+    // Show on page load within 1 second (if user has not closed it in this session)
+    if (sessionStorage.getItem("quoteModalClosed") !== "true") {
       window.addEventListener("scroll", handleScroll);
 
-      // Trigger 1: Show at 5 seconds
+      // Trigger 1: Show immediately after 1 second of loading
       timer1 = setTimeout(() => {
-        if (localStorage.getItem("quoteSubmitted") !== "true") {
+        if (sessionStorage.getItem("quoteModalClosed") !== "true") {
           setIsOpen(true);
         }
-      }, 5 * 1000);
+      }, 1000);
 
       // Trigger 2: Show at 2 minutes (120 seconds)
       timer2 = setTimeout(() => {
-        if (localStorage.getItem("quoteSubmitted") !== "true") {
+        if (sessionStorage.getItem("quoteModalClosed") !== "true") {
           setIsOpen(true);
         }
       }, 120 * 1000);
 
       // Trigger 3: Show at 5 minutes (300 seconds)
       timer3 = setTimeout(() => {
-        if (localStorage.getItem("quoteSubmitted") !== "true") {
+        if (sessionStorage.getItem("quoteModalClosed") !== "true") {
           setIsOpen(true);
         }
       }, 300 * 1000);
