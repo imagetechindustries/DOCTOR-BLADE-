@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
 import { useSubmitQuote } from "../../services/api";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -79,13 +78,6 @@ const TruckIcon = ({ className = "w-5 h-5" }) => (
 );
 
 export default function QuoteModal() {
-  const location = useLocation();
-  const isAdminPage = location?.pathname?.startsWith("/admin");
-  const isBlogPage = location?.pathname?.startsWith("/blog");
-  const isCrawler =
-    typeof navigator !== "undefined" &&
-    /bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent || "");
-
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -103,13 +95,8 @@ export default function QuoteModal() {
 
   const submitQuoteMutation = useSubmitQuote();
 
-  // Handle open event and lead gen triggers (DISABLED on admin pages)
+  // Handle open event and lead gen triggers
   useEffect(() => {
-    if (isAdminPage || isCrawler) {
-      setIsOpen(false);
-      return;
-    }
-
     const handleOpen = (e) => {
       setIsOpen(true);
       setIsSuccess(false);
@@ -121,24 +108,21 @@ export default function QuoteModal() {
 
     window.addEventListener("open-quote-modal", handleOpen);
 
-    // Automatic Popup Logic for Lead Generation (DISABLED on blog articles to prevent reading disruptions)
+    // Automatic Popup Logic for Lead Generation (if not submitted)
     let timer1, timer2, timer3;
     let hasTriggeredScroll = false;
-    let handleScroll;
 
-    if (!isBlogPage && localStorage.getItem("quoteSubmitted") !== "true") {
-      handleScroll = () => {
-        if (!hasTriggeredScroll && window.scrollY > 300) {
-          if (localStorage.getItem("quoteSubmitted") !== "true") {
-            setIsOpen(true);
-            hasTriggeredScroll = true;
-            if (handleScroll) {
-              window.removeEventListener("scroll", handleScroll);
-            }
-          }
+    const handleScroll = () => {
+      if (!hasTriggeredScroll && window.scrollY > 300) {
+        if (localStorage.getItem("quoteSubmitted") !== "true") {
+          setIsOpen(true);
+          hasTriggeredScroll = true;
+          window.removeEventListener("scroll", handleScroll);
         }
-      };
+      }
+    };
 
+    if (localStorage.getItem("quoteSubmitted") !== "true") {
       window.addEventListener("scroll", handleScroll);
 
       // Trigger 1: Show at 5 seconds
@@ -165,14 +149,12 @@ export default function QuoteModal() {
 
     return () => {
       window.removeEventListener("open-quote-modal", handleOpen);
-      if (handleScroll) {
-        window.removeEventListener("scroll", handleScroll);
-      }
+      window.removeEventListener("scroll", handleScroll);
       if (timer1) clearTimeout(timer1);
       if (timer2) clearTimeout(timer2);
       if (timer3) clearTimeout(timer3);
     };
-  }, [isAdminPage, isBlogPage, isCrawler]);
+  }, []);
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -186,7 +168,7 @@ export default function QuoteModal() {
     };
   }, [isOpen]);
 
-  if (isAdminPage || !isOpen) return null;
+  if (!isOpen) return null;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -226,7 +208,7 @@ export default function QuoteModal() {
       sourceWebsite:
         typeof window !== "undefined"
           ? window.location.hostname.replace(/^www\./, "")
-          : "doctorblade.co.in",
+          : "www.stroboscopelight.com",
     };
 
     try {
@@ -267,7 +249,7 @@ export default function QuoteModal() {
 
       {/* Modal Container */}
       <div className="relative w-full max-w-[1050px] bg-white rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden animate-scaleUp flex flex-col md:flex-row max-h-[95vh] md:max-h-[85vh] overflow-y-auto md:overflow-hidden">
-        
+
         {/* Global Close Button */}
         <button
           onClick={handleClose}
@@ -279,71 +261,24 @@ export default function QuoteModal() {
         </button>
 
         {/* ── Left Side: Image Branding Panel (~55% width) ── */}
-        <div className="flex w-full md:w-[55%] relative flex-col justify-between overflow-hidden bg-white shrink-0 min-h-[380px] md:min-h-0 pt-2 md:pt-0">
-          
-          {/* Background Image Container (Positioned right so products are prominently visible above stats bar) */}
+        <div className="flex w-full md:w-[55%] relative flex-col justify-between overflow-hidden bg-slate-900 shrink-0 min-h-[380px] md:min-h-0 pt-2 md:pt-0">
+
+          {/* Background Image Container */}
           <div className="absolute top-0 right-0 w-full h-full md:h-[calc(100%-72px)] z-0">
-            <div 
-              className="w-full h-full bg-right-bottom md:bg-right bg-no-repeat bg-[length:150%_auto] md:bg-[length:auto_100%]"
-              style={{ backgroundImage: "url(/form.jpeg)" }}
+            <div
+              className="w-full h-full bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: "url(/popup-bg.jpg)" }}
             />
-            {/* Soft White Fade (Desktop only) strictly on the left text area, preserving full product clarity on right */}
-            <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-white/95 via-white/50 to-transparent w-[50%]" />
-            {/* Mobile soft white fade */}
-            <div className="md:hidden absolute inset-0 bg-white/80" />
+            {/* Subtle Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
           </div>
 
-          {/* Top Content Area - Left-aligned text constrained to ~48% to give spacious room for product images */}
-          <div className="relative z-20 px-6 md:px-8 pt-4 md:pt-8 flex-1 flex flex-col">
-            
-            {/* Logo & Subtitle */}
-            <div className="flex items-center gap-3 mb-5 md:mb-6">
-              <img src="/logo.png" alt="Doctor Blade Logo" className="h-9 md:h-10 w-auto object-contain" />
-              <div className="text-[9px] text-slate-500 font-bold leading-tight border-l-2 border-slate-300 pl-3 uppercase tracking-wider">
+          {/* Top Content Area - Logo Badge Only */}
+          <div className="relative z-20 px-6 pt-6 flex-1 flex flex-col items-start pointer-events-none">
+            <div className="hidden md:inline-flex items-center gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl shadow-md border border-white/80">
+              <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
+              <div className="text-[9px] text-slate-800 font-bold leading-tight border-l-2 border-slate-300 pl-2.5 uppercase tracking-wider text-left">
                 Precision Solutions<br />For Printing Industry
-              </div>
-            </div>
-
-            {/* Left-Aligned Headline with exact 4-line breakdown leaving right side for products */}
-            <h2 className="text-[22px] sm:text-[26px] md:text-3xl lg:text-[34px] font-black mb-2 md:mb-3 tracking-tight leading-[1.1] text-slate-800 drop-shadow-sm w-full md:max-w-[48%] z-20 relative text-left">
-              Quality Tools<br />
-              for a <span className="text-orange-500">Sharper<br /></span>
-              <span className="text-orange-500">Print Tomorrow</span>
-            </h2>
-
-            {/* Line separator */}
-            <div className="w-12 h-1 bg-orange-500 mb-3 md:mb-4 rounded-full z-20 relative" />
-
-            {/* Description */}
-            <p className="text-[11px] lg:text-xs text-slate-600 leading-relaxed font-bold max-w-[85%] md:max-w-[45%] mb-6 md:mb-8 z-20 relative text-left">
-              From consumables to testing instruments, we support your printing &amp; packaging process with reliable solutions.
-            </p>
-
-            {/* Horizontal Feature Badges */}
-            <div className="flex gap-4 sm:gap-6 justify-start pb-6 md:pb-0 relative z-20">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center mb-1.5 bg-white shadow-sm text-orange-500">
-                  <CheckCircle2Icon className="w-5 h-5" />
-                </div>
-                <span className="text-[9px] font-bold text-slate-700 leading-tight">
-                  Premium<br />Quality
-                </span>
-              </div>
-              <div className="flex flex-col items-center text-center">
-                <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center mb-1.5 bg-white shadow-sm text-orange-500">
-                  <UsersIcon className="w-5 h-5" />
-                </div>
-                <span className="text-[9px] font-bold text-slate-700 leading-tight">
-                  Technical<br />Support
-                </span>
-              </div>
-              <div className="flex flex-col items-center text-center">
-                <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center mb-1.5 bg-white shadow-sm text-orange-500">
-                  <TruckIcon className="w-5 h-5" />
-                </div>
-                <span className="text-[9px] font-bold text-slate-700 leading-tight">
-                  Pan-India<br />Delivery
-                </span>
               </div>
             </div>
           </div>
@@ -379,7 +314,7 @@ export default function QuoteModal() {
 
         {/* ── Right Side: Form Panel (~45% width) ── */}
         <div className="w-full md:w-[45%] bg-white p-6 md:p-8 relative flex flex-col shrink-0 md:shrink overflow-y-auto">
-          
+
           <div className="mb-6 pr-8">
             <div className="flex items-center gap-2 text-orange-600 font-black text-[10px] tracking-widest uppercase mb-2">
               <div className="w-6 h-0.5 bg-orange-600 rounded-full" />
@@ -420,7 +355,7 @@ export default function QuoteModal() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-4.5 flex-1 flex flex-col">
-            
+
             {/* Honeypot field (anti-spam) */}
             <input
               type="text"
@@ -537,17 +472,15 @@ export default function QuoteModal() {
                   value={formData.subject}
                   onChange={handleChange}
                   className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder-slate-400"
-                  placeholder="e.g. Doctor Blades 0.15 x 30mm, Dyne Pen 38, Stroboscope"
+                  placeholder="e.g. LED Handheld Stroboscope, Xenon Flash Tube"
                 />
                 <datalist id="product-suggestions">
-                  <option value="WIPEX Doctor Blades" />
-                  <option value="Long Life Doctor Blades" />
-                  <option value="Ceramic Coated Doctor Blades" />
-                  <option value="Plastic / Polymer Doctor Blades" />
-                  <option value="Dyne Test Pens & Inks" />
-                  <option value="Viscosity Cups (Zahn / Ford)" />
-                  <option value="Industrial Stroboscopes" />
-                  <option value="Wire Bar Coaters" />
+                  <option value="LED Handheld Stroboscope" />
+                  <option value="LED Handheld Stroboscope with Lens" />
+                  <option value="Xenon Flash Tube Stroboscope" />
+                  <option value="U Tube Fixed Model Stroboscope" />
+                  <option value="Doctor Blade" />
+                  <option value="Dyne Test Pen" />
                 </datalist>
               </div>
             </div>
